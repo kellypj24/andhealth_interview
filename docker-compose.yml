@@ -33,4 +33,4 @@ services:
 
 volumes:
   opais_340b_data:
-    name: opais_340b_data
+    name: opais_340b_data  # Named volume for persistence between container restarts
