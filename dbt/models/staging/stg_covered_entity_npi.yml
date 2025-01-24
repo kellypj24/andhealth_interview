@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: stg_covered_entity_npi
+    description: Staging model that extracts all NPI (National Provider Identifier) numbers associated with covered entities
+
+    columns:
+      - name: npi_id
+        description: Surrogate key generated from ce_id, npi_number, and state
+        tests:
+          - unique
+          - not_null
+
+      - name: ce_id
+        description: Covered entity identifier
+        tests:
+          - not_null
+
+      - name: id_340b
+        description: 340B program identifier
+        tests:
+          - not_null
+
+      - name: npi_number
+        description: National Provider Identifier number
+        tests:
+          - not_null
+          - length:
+              equal_to: 10  # NPI numbers are 10 digits
+
+      - name: state
+        description: State associated with the NPI number
+        tests:
+          - not_null
+          - length:
+              equal_to: 2
+
+      - name: loaded_at
+        description: Timestamp when the record was loaded into the source
+        tests:
+          - not_null
+
+      - name: dbt_loaded_at
+        description: Timestamp when this record was loaded by dbt
+        tests:
+          - not_null
