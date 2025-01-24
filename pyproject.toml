@@ -3,6 +3,7 @@ name = "340b-data-pipeline"
 version = "0.1.0"
 description = "Data pipeline for 340B OPAIS data"
 authors = ["Your Name <your.email@example.com>"]
+package-mode = false  # Explicitly disable package mode
 
 [tool.poetry.dependencies]
 python = "^3.9"
