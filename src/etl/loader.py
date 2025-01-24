@@ -9,16 +9,19 @@ from datetime import datetime
 from pathlib import Path
 from sqlalchemy import (
     create_engine,
-    text,
-    Table,
     MetaData,
+    Table,
     Column,
     Integer,
     String,
     JSON,
+    TIMESTAMP,
+    text,
 )
 import os
 from typing import Iterator, Dict, Any
+from psycopg2.extras import execute_values
+import json
 
 # Set up logging
 logging.basicConfig(
@@ -38,6 +41,7 @@ class RawDataLoader:
         self.covered_entities = Table(
             "covered_entities",
             self.metadata,
+            Column("_loaded_at", TIMESTAMP(timezone=True)),
             Column("ce_id", Integer),
             Column("id_340b", String),
             Column("data", JSON),
@@ -91,36 +95,46 @@ class RawDataLoader:
             conn.commit()
 
     def load_data(self, batch_size: int = 1000):
-        """Load data in batches."""
+        """Load data in batches using execute_values with ON CONFLICT handling."""
         load_id = self.start_load()
         records_processed = 0
 
         try:
-            with self.engine.connect() as conn:
+            # Get raw connection for using execute_values
+            raw_conn = self.engine.raw_connection()
+            with raw_conn.cursor() as cur:
                 batch = []
+                insert_query = """
+                    INSERT INTO raw_340b.covered_entities (ce_id, id_340b, data, _loaded_at)
+                    VALUES %s
+                    ON CONFLICT (ce_id, _loaded_at) DO UPDATE 
+                    SET id_340b = EXCLUDED.id_340b,
+                        data = EXCLUDED.data;
+                """
 
                 for entity in self.stream_entities():
+                    # Convert entity to a tuple for execute_values
                     batch.append(
-                        {
-                            "ce_id": entity.get("ceId"),
-                            "id_340b": entity.get("id340B"),
-                            "data": entity,
-                        }
+                        (
+                            entity.get("ceId"),
+                            entity.get("id340B"),
+                            json.dumps(entity),
+                            datetime.now(),
+                        )
                     )
 
                     if len(batch) >= batch_size:
-                        # Use insert() construct instead of raw SQL
-                        conn.execute(self.covered_entities.insert(), batch)
+                        execute_values(cur, insert_query, batch)
                         records_processed += len(batch)
                         batch = []
-                        conn.commit()
+                        raw_conn.commit()
                         logger.info(f"Processed {records_processed} records")
 
                 # Insert any remaining records
                 if batch:
-                    conn.execute(self.covered_entities.insert(), batch)
+                    execute_values(cur, insert_query, batch)
                     records_processed += len(batch)
-                    conn.commit()
+                    raw_conn.commit()
 
                 self.finish_load(load_id, records_processed)
                 logger.info(f"Successfully loaded {records_processed} records")
@@ -130,6 +144,8 @@ class RawDataLoader:
             logger.error(f"Error loading data: {error_msg}")
             self.finish_load(load_id, records_processed, error_msg)
             raise
+        finally:
+            raw_conn.close()
 
 
 def main():
