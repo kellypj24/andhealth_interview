@@ -1,0 +1,70 @@
+version: 2
+
+models:
+  - name: stg_covered_entity_addresses
+    description: Staging model that extracts all address types (billing, shipping, street) from covered entities
+    
+    columns:
+      - name: address_id
+        description: Surrogate key generated from ce_id, address_type, and address_line1
+        tests:
+          - unique
+          - not_null
+
+      - name: ce_id
+        description: Covered entity identifier
+        tests:
+          - not_null
+
+      - name: id_340b
+        description: 340B program identifier
+        tests:
+          - not_null
+
+      - name: address_type
+        description: Type of address (billing, shipping, or street)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['billing', 'shipping', 'street']
+
+      - name: address_line1
+        description: Primary address line
+        tests:
+          - not_null
+
+      - name: address_line2
+        description: Secondary address line
+
+      - name: city
+        description: City
+        tests:
+          - not_null
+
+      - name: state
+        description: State code
+        tests:
+          - not_null
+          - length:
+              equal_to: 2
+
+      - name: zip
+        description: ZIP code
+        tests:
+          - not_null
+
+      - name: organization
+        description: Organization name (only populated for billing addresses)
+
+      - name: is_340b_street_address
+        description: Flag indicating if this is a 340B program street address (only for shipping addresses)
+
+      - name: loaded_at
+        description: Timestamp when the record was loaded into the source
+        tests:
+          - not_null
+
+      - name: dbt_loaded_at
+        description: Timestamp when this record was loaded by dbt
+        tests:
+          - not_null
