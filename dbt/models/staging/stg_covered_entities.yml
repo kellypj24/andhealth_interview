@@ -1,0 +1,63 @@
+version: 2
+
+models:
+  - name: stg_covered_entities
+    description: Staged covered entities with flattened core attributes
+    columns:
+      - name: ce_id
+        description: Primary identifier for covered entity
+        tests:
+          - unique
+          - not_null
+      
+      - name: id_340b
+        description: 340B program identifier
+        tests:
+          - not_null
+      
+      - name: entity_name
+        description: Name of the covered entity
+        tests:
+          - not_null
+      
+      - name: entity_type
+        description: Type of covered entity (e.g., BL, RWC, etc.)
+        tests:
+          - not_null
+      
+      - name: sub_name
+        description: Sub-name or DBA name of the entity
+      
+      - name: is_participating
+        description: Whether entity is currently participating in 340B program
+        tests:
+          - not_null
+      
+      - name: participating_start_date
+        description: Date entity started participating in 340B program
+      
+      - name: grant_number
+        description: Associated grant number if applicable
+      
+      - name: medicaid_number
+        description: Primary Medicaid number if applicable
+      
+      - name: certified_date
+        description: Date of certification or recertification
+      
+      - name: termination_date
+        description: Date of termination if applicable
+      
+      - name: termination_reason
+        description: Reason for termination if applicable
+      
+      - name: primary_state
+        description: Primary state of operation
+      
+      - name: loaded_at
+        description: Timestamp of when the record was loaded
+        tests:
+          - not_null
+      
+      - name: source_edited_at
+        description: Last edit timestamp from source system
