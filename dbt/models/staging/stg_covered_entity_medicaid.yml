@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: stg_covered_entity_medicaid
+    description: Staging model that extracts all Medicaid numbers associated with covered entities
+
+    columns:
+      - name: medicaid_id
+        description: Surrogate key generated from ce_id, medicaid_number, and state
+        tests:
+          - unique
+          - not_null
+
+      - name: ce_id
+        description: Covered entity identifier
+        tests:
+          - not_null
+
+      - name: id_340b
+        description: 340B program identifier
+        tests:
+          - not_null
+
+      - name: medicaid_number
+        description: Medicaid provider number
+        tests:
+          - not_null
+
+      - name: state
+        description: State associated with the Medicaid number
+        tests:
+          - not_null
+          - length:
+              equal_to: 2
+
+      - name: loaded_at
+        description: Timestamp when the record was loaded into the source
+        tests:
+          - not_null
+
+      - name: dbt_loaded_at
+        description: Timestamp when this record was loaded by dbt
+        tests:
+          - not_null
