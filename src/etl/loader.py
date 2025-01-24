@@ -7,7 +7,16 @@ import ijson
 import logging
 from datetime import datetime
 from pathlib import Path
-from sqlalchemy import create_engine, text
+from sqlalchemy import (
+    create_engine,
+    text,
+    Table,
+    MetaData,
+    Column,
+    Integer,
+    String,
+    JSON,
+)
 import os
 from typing import Iterator, Dict, Any
 
@@ -23,6 +32,17 @@ class RawDataLoader:
         """Initialize the data loader."""
         self.engine = create_engine(database_url)
         self.data_path = Path("/app/data/raw/OPA_CE_DAILY_PUBLIC.JSON")
+
+        # Define table metadata
+        self.metadata = MetaData(schema="raw_340b")
+        self.covered_entities = Table(
+            "covered_entities",
+            self.metadata,
+            Column("ce_id", Integer),
+            Column("id_340b", String),
+            Column("data", JSON),
+            extend_existing=True,
+        )
 
     def stream_entities(self) -> Iterator[Dict[str, Any]]:
         """Stream entities from the JSON file."""
@@ -89,16 +109,8 @@ class RawDataLoader:
                     )
 
                     if len(batch) >= batch_size:
-                        conn.execute(
-                            text(
-                                """
-                                INSERT INTO raw_340b.covered_entities 
-                                (ce_id, id_340b, data)
-                                VALUES (:ce_id, :id_340b, :data::jsonb)
-                            """
-                            ),
-                            batch,
-                        )
+                        # Use insert() construct instead of raw SQL
+                        conn.execute(self.covered_entities.insert(), batch)
                         records_processed += len(batch)
                         batch = []
                         conn.commit()
@@ -106,21 +118,12 @@ class RawDataLoader:
 
                 # Insert any remaining records
                 if batch:
-                    conn.execute(
-                        text(
-                            """
-                            INSERT INTO raw_340b.covered_entities 
-                            (ce_id, id_340b, data)
-                            VALUES (:ce_id, :id_340b, :data::jsonb)
-                        """
-                        ),
-                        batch,
-                    )
+                    conn.execute(self.covered_entities.insert(), batch)
                     records_processed += len(batch)
                     conn.commit()
 
-            self.finish_load(load_id, records_processed)
-            logger.info(f"Successfully loaded {records_processed} records")
+                self.finish_load(load_id, records_processed)
+                logger.info(f"Successfully loaded {records_processed} records")
 
         except Exception as e:
             error_msg = str(e)
