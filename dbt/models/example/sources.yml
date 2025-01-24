@@ -1,0 +1,21 @@
+sources:
+  - name: raw_340b
+    database: opais_340b  # matches your database name
+    schema: raw_340b      # matches your raw data schema
+    tables:
+      - name: covered_entities
+        description: Raw covered entities data from OPAIS
+        columns:
+          - name: ce_id
+            description: Primary identifier for covered entity
+            tests:
+              - not_null
+              - unique
+          - name: id_340b
+            description: 340B ID for the covered entity
+            tests:
+              - not_null
+          - name: data
+            description: JSON blob containing full entity data
+          - name: _loaded_at
+            description: Timestamp when record was loaded
