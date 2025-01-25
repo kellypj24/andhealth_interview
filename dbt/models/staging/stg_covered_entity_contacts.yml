@@ -1,0 +1,72 @@
+version: 2
+
+models:
+  - name: stg_covered_entity_contacts
+    description: >
+      Staging model for covered entity contacts, including both authorizing officials
+      and primary contacts. Each record represents a unique contact associated with
+      a covered entity.
+    
+    columns:
+      - name: contact_id
+        description: Surrogate key generated from ce_id, contact_type, and contact_name
+        tests:
+          - unique
+          - not_null
+
+      - name: ce_id
+        description: Foreign key to the covered entity
+        tests:
+          - not_null
+
+      - name: id_340b
+        description: The 340B ID of the covered entity
+        tests:
+          - not_null
+
+      - name: contact_type
+        description: >
+          The type of contact. Can be either:
+          - authorizing_official
+          - primary_contact
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['authorizing_official', 'primary_contact']
+
+      - name: contact_name
+        description: The full name of the contact
+        tests:
+          - not_null
+
+      - name: contact_title
+        description: The title or position of the contact
+        tests:
+          - not_null
+
+      - name: phone_number
+        description: The contact's phone number
+        tests:
+          - not_null
+
+      - name: phone_extension
+        description: >
+          The contact's phone extension. Only applicable for primary contacts,
+          will be null for authorizing officials.
+
+      - name: _loaded_at
+        description: Timestamp when the record was loaded into the raw table
+        tests:
+          - not_null
+
+      - name: dbt_loaded_at
+        description: Timestamp when this record was loaded into the staging table
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - ce_id
+            - contact_type
+            - contact_name
