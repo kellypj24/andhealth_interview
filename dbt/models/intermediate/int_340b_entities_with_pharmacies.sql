@@ -17,7 +17,8 @@ with pharmacy_metrics as (
         max(begin_date) as most_recent_contract_date,
         count(distinct city) as unique_pharmacy_cities,
         count(distinct state) as unique_pharmacy_states,
-        string_agg(distinct state, ', ' order by state) as pharmacy_states
+        string_agg(distinct state, ', ' order by state) as pharmacy_states,
+        cast(date_trunc('month', current_date) as date) as snapshot_date
     from {{ ref('stg_contract_pharmacies') }}
     group by ce_id
 ),
@@ -37,6 +38,7 @@ pharmacy_details as (
         pm.unique_pharmacy_cities,
         pm.unique_pharmacy_states,
         pm.pharmacy_states,
+        pm.snapshot_date,
         ce.loaded_at,
         ce.source_edited_at,
         current_timestamp as dbt_loaded_at
