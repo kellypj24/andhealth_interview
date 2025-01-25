@@ -1,0 +1,106 @@
+version: 2
+
+models:
+  - name: stg_contract_pharmacies
+    description: >
+      Staging model for contract pharmacies associated with covered entities.
+      Each record represents a unique contract pharmacy relationship and includes
+      both pharmacy details and address information.
+    
+    columns:
+      - name: contract_pharmacy_id
+        description: Surrogate key generated from ce_id, pharmacy_id, and contract_id
+        tests:
+          - unique
+          - not_null
+
+      - name: ce_id
+        description: Foreign key to the covered entity
+        tests:
+          - not_null
+
+      - name: id_340b
+        description: The 340B ID of the covered entity
+        tests:
+          - not_null
+
+      - name: pharmacy_id
+        description: Unique identifier for the pharmacy
+        tests:
+          - not_null
+
+      - name: contract_id
+        description: Unique identifier for the contract relationship
+        tests:
+          - not_null
+
+      - name: pharmacy_name
+        description: Name of the contract pharmacy
+        tests:
+          - not_null
+
+      - name: phone_number
+        description: Contact phone number for the pharmacy
+        tests:
+          - not_null
+
+      - name: comments
+        description: Optional comments about the contract pharmacy relationship
+
+      - name: begin_date
+        description: Date when the contract pharmacy relationship began
+        tests:
+          - not_null
+
+      - name: certified_decertified_date
+        description: Date of certification or decertification
+        tests:
+          - not_null
+
+      - name: edit_date
+        description: Last edit date for the contract pharmacy record
+        tests:
+          - not_null
+
+      - name: address_line1
+        description: Primary address line for the pharmacy
+        tests:
+          - not_null
+
+      - name: address_line2
+        description: Secondary address line for the pharmacy
+
+      - name: city
+        description: City of the pharmacy address
+        tests:
+          - not_null
+
+      - name: state
+        description: State of the pharmacy address
+        tests:
+          - not_null
+          - length:
+              max: 2
+              min: 2
+
+      - name: zip
+        description: ZIP code of the pharmacy address
+        tests:
+          - not_null
+
+      - name: _loaded_at
+        description: Timestamp when the record was loaded into the raw table
+        tests:
+          - not_null
+
+      - name: dbt_loaded_at
+        description: Timestamp when this record was loaded into the staging table
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - ce_id
+            - pharmacy_id
+            - contract_id
