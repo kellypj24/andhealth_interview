@@ -18,6 +18,7 @@ billing_addresses as (
         data->'billingAddress'->>'state' as state,
         data->'billingAddress'->>'zip' as zip,
         data->'billingAddress'->>'organization' as organization,
+        false as is_340b_street_address,  -- Added with default false
         _loaded_at as loaded_at
     from source
 ),
@@ -32,6 +33,7 @@ shipping_addresses as (
         address->>'city' as city,
         address->>'state' as state,
         address->>'zip' as zip,
+        null as organization,
         (address->>'is340BStreetAddress')::boolean as is_340b_street_address,
         _loaded_at as loaded_at
     from source,
@@ -52,6 +54,8 @@ street_addresses as (
         data->'streetAddress'->>'city' as city,
         data->'streetAddress'->>'state' as state,
         data->'streetAddress'->>'zip' as zip,
+        null as organization,
+        false as is_340b_street_address,  -- Added with default false
         _loaded_at as loaded_at
     from source
 ),
@@ -59,31 +63,9 @@ street_addresses as (
 unioned as (
     select * from billing_addresses
     union all
-    select 
-        ce_id,
-        id_340b,
-        address_type,
-        address_line1,
-        address_line2,
-        city,
-        state,
-        zip,
-        null as organization,
-        loaded_at
-    from street_addresses
+    select * from street_addresses
     union all
-    select 
-        ce_id,
-        id_340b,
-        address_type,
-        address_line1,
-        address_line2,
-        city,
-        state,
-        zip,
-        null as organization,
-        loaded_at
-    from shipping_addresses
+    select * from shipping_addresses
 )
 
 select 
