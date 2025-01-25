@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: int_340b_contract_pharmacies
+  - name: int_340b_entities_with_pharmacies
     description: Intermediate model summarizing contract pharmacy relationships by covered entity
     
     columns:
