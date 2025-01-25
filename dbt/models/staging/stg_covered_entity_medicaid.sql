@@ -3,6 +3,14 @@ with source as (
         ce_id,
         id_340b,
         data,
+        -- Extract contact information at the entity level
+        data->'authorizingOfficial'->>'name' as auth_official_name,
+        data->'authorizingOfficial'->>'phoneNumber' as auth_official_phone,
+        data->'authorizingOfficial'->>'title' as auth_official_title,
+        data->'primaryContact'->>'name' as primary_contact_name,
+        data->'primaryContact'->>'phoneNumber' as primary_contact_phone,
+        data->'primaryContact'->>'phoneNumberExtension' as primary_contact_phone_ext,
+        data->'primaryContact'->>'title' as primary_contact_title,
         _loaded_at
     from {{ source('raw_340b', 'covered_entities') }}
 ),
@@ -13,6 +21,13 @@ medicaid_details as (
         id_340b,
         medicaid->>'medicaidNumber' as medicaid_number,
         medicaid->>'state' as state,
+        auth_official_name,
+        auth_official_phone,
+        auth_official_title,
+        primary_contact_name,
+        primary_contact_phone,
+        primary_contact_phone_ext,
+        primary_contact_title,
         _loaded_at as loaded_at
     from source,
     jsonb_array_elements(case 
@@ -29,6 +44,13 @@ primary_medicaid as (
         id_340b,
         data->>'medicaidNumber' as medicaid_number,
         data->>'state' as state,
+        auth_official_name,
+        auth_official_phone,
+        auth_official_title,
+        primary_contact_name,
+        primary_contact_phone,
+        primary_contact_phone_ext,
+        primary_contact_title,
         _loaded_at as loaded_at
     from source
     where data->>'medicaidNumber' is not null
@@ -45,4 +67,4 @@ select
     *,
     current_timestamp as dbt_loaded_at
 from unioned
-where medicaid_number is not null  -- Remove any null records
+where medicaid_number is not null

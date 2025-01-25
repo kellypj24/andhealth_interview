@@ -2,7 +2,11 @@ version: 2
 
 models:
   - name: stg_covered_entity_medicaid
-    description: Staging model that extracts all Medicaid numbers associated with covered entities
+    description: >
+      Staging model that extracts Medicaid provider relationships from covered entities, 
+      including both array-based medicaid numbers and primary medicaid relationships.
+      Contains contact information (authorizing officials and primary contacts) and
+      participation details for each Medicaid relationship.
 
     columns:
       - name: medicaid_id
@@ -15,30 +19,105 @@ models:
         description: Covered entity identifier
         tests:
           - not_null
+          - relationships:
+              to: ref('stg_covered_entities')
+              field: ce_id
 
       - name: id_340b
-        description: 340B program identifier
+        description: 340B program identifier for the covered entity
         tests:
           - not_null
 
       - name: medicaid_number
-        description: Medicaid provider number
+        description: Medicaid provider number assigned to this relationship
         tests:
           - not_null
 
       - name: state
-        description: State associated with the Medicaid number
+        description: State associated with the Medicaid number/relationship
         tests:
           - not_null
-          - length:
-              equal_to: 2
+
+      - name: auth_official_name
+        description: Full name of the authorizing official responsible for this Medicaid relationship
+        tests:
+          - not_null:
+              where: "is_participating = 'TRUE'"
+
+      - name: auth_official_phone
+        description: Phone number of the authorizing official
+        tests:
+          - not_null:
+              where: "is_participating = 'TRUE'"
+
+      - name: auth_official_title
+        description: Job title of the authorizing official
+        tests:
+          - not_null:
+              where: "is_participating = 'TRUE'"
+
+      - name: primary_contact_name
+        description: Full name of the primary contact for this Medicaid relationship
+        tests:
+          - not_null:
+              where: "is_participating = 'TRUE'"
+
+      - name: primary_contact_phone
+        description: Phone number of the primary contact
+        tests:
+          - not_null:
+              where: "is_participating = 'TRUE'"
+
+      - name: primary_contact_phone_ext
+        description: Optional phone extension for the primary contact
+
+      - name: primary_contact_title
+        description: Job title of the primary contact
+        tests:
+          - not_null:
+              where: "is_participating = 'TRUE'"
+
+      - name: entity_type
+        description: Type of covered entity (e.g., BL)
+        tests:
+          - not_null
+
+      - name: grant_number
+        description: Grant number associated with this Medicaid relationship
+        tests:
+          - not_null
+
+      - name: is_participating
+        description: Indicates if the relationship is currently active ('TRUE'/'FALSE')
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['TRUE', 'FALSE']
+
+      - name: participating_start_date
+        description: Date when this Medicaid relationship became active
+        tests:
+          - not_null:
+              where: "is_participating = 'TRUE'"
+
+      - name: termination_date
+        description: Date when this Medicaid relationship was terminated, if applicable
+        tests:
+          - not_null:
+              where: "is_participating = 'FALSE'"
+
+      - name: termination_reason
+        description: Reason provided for termination, if the relationship was terminated
+        tests:
+          - not_null:
+              where: "termination_date is not null"
 
       - name: loaded_at
-        description: Timestamp when the record was loaded into the source
+        description: Timestamp when the record was loaded into the source system
         tests:
           - not_null
 
       - name: dbt_loaded_at
-        description: Timestamp when this record was loaded by dbt
+        description: Timestamp when this record was processed by dbt
         tests:
           - not_null
