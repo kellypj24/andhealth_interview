@@ -1,0 +1,111 @@
+version: 2
+
+models:
+  - name: int_340b_entities_with_contacts
+    description: >
+      Intermediate model combining covered entities with their authorizing officials 
+      and primary contacts. Contact information is pivoted by contact type for easier access.
+    
+    columns:
+      # Core Entity Fields
+      - name: ce_id
+        description: Unique identifier for the covered entity
+        tests:
+          - unique
+          - not_null
+
+      - name: id_340b
+        description: Official 340B program ID for the covered entity
+        tests:
+          - not_null
+          - unique
+
+      - name: entity_name
+        description: Legal name of the covered entity
+        tests:
+          - not_null
+
+      - name: entity_type
+        description: Type code for the covered entity (e.g., BL for Black Lung)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['BL', 'CH', 'DS', 'FQ', 'HC', 'HM', 'HR', 'RH', 'TB']
+
+      - name: sub_name
+        description: Sub-entity or facility name if applicable
+
+      - name: is_participating
+        description: Flag indicating if entity is currently participating in 340B program
+        tests:
+          - not_null
+
+      - name: participating_start_date
+        description: Date when entity began participating in 340B program
+        tests:
+          - not_null:
+
+      # Authorizing Official Fields
+      - name: authorizing_official_name
+        description: Full name of the entity's authorizing official
+        tests:
+          - not_null:
+
+      - name: authorizing_official_phone
+        description: Phone number for authorizing official
+        tests:
+          - not_null:
+              where: "authorizing_official_name is not null"
+          - dbt_utils.regex_match:
+              pattern: '^[0-9]{10}$'
+
+      - name: authorizing_official_title
+        description: Job title of the authorizing official
+        tests:
+          - not_null:
+
+      - name: authorizing_official_phone_ext
+        description: Phone extension for authorizing official
+
+      # Primary Contact Fields
+      - name: primary_contact_name
+        description: Full name of the entity's primary contact person
+        tests:
+          - not_null:
+              where: "is_participating = true"
+
+      - name: primary_contact_phone
+        description: Phone number for primary contact
+        tests:
+          - not_null:
+              where: "primary_contact_name is not null"
+          - dbt_utils.regex_match:
+              pattern: '^[0-9]{10}$'
+
+      - name: primary_contact_title
+        description: Job title of the primary contact
+        tests:
+          - not_null:
+              where: "primary_contact_name is not null"
+
+      - name: primary_contact_phone_ext
+        description: Phone extension for primary contact
+
+      # Metadata Fields
+      - name: loaded_at
+        description: Timestamp when record was loaded into the warehouse
+        tests:
+          - not_null
+
+      - name: source_edited_at
+        description: Timestamp when record was last edited in source system
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.equal_rowcount:
+          compare_model: ref('stg_covered_entities')
+      - dbt_utils.recency:
+          field: loaded_at
+          datepart: day
+          interval: 1
