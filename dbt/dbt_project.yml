@@ -36,5 +36,7 @@ models:
       +materialized: view
     staging:
       +materialized: table
+      +schema: staging
     intermediate:
       +materialized: table
+      +schema: intermediate
