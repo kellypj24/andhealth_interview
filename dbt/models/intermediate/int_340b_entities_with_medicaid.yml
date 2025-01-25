@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: int_340b_entities_with_medicaid
+    description: Intermediate model summarizing Medicaid provider relationships by covered entity
+    
+    columns:
+      - name: ce_id
+        description: Unique identifier for the covered entity
+        tests:
+          - unique
+          - not_null
+
+      - name: id_340b
+        description: 340B program ID for the covered entity
+        tests:
+          - not_null
+
+      - name: entity_name
+        description: Name of the covered entity
+        tests:
+          - not_null
+
+      - name: total_medicaid_numbers
+        description: Total number of Medicaid provider numbers for the entity
+
+      - name: unique_medicaid_states
+        description: Number of unique states where entity has Medicaid relationships
+
+      - name: medicaid_states
+        description: Comma-separated list of states with Medicaid relationships
+
+      - name: medicaid_contact_names
+        description: List of primary contact names for Medicaid relationships
+
+      - name: medicaid_contact_titles
+        description: List of contact titles for Medicaid relationships
