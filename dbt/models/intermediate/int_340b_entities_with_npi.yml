@@ -1,8 +1,8 @@
 version: 2
 
 models:
-  - name: int_340b_entities_with_addresses
-    description: Intermediate model combining covered entities with their associated addresses.
+  - name: int_340b_entities_with_npi
+    description: Intermediate model combining covered entities with their NPI information.
     
     columns:
       - name: ce_id
