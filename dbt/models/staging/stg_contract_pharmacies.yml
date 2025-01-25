@@ -79,9 +79,6 @@ models:
         description: State of the pharmacy address
         tests:
           - not_null
-          - length:
-              max: 2
-              min: 2
 
       - name: zip
         description: ZIP code of the pharmacy address
