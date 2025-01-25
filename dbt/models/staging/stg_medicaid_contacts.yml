@@ -1,0 +1,67 @@
+version: 2
+
+models:
+  - name: stg_medicaid_contacts
+    description: >
+      Staging model for Medicaid entity contacts. Contains both authorizing officials
+      and primary contacts from the medicaid_entities source. Contact information is
+      extracted from the nested JSON structure and includes name parsing to split the
+      full name into components.
+    
+    columns:
+      - name: medicaid_contact_sk
+        description: Surrogate key generated from entity ID, contact type, full name, and phone
+        tests:
+          - unique
+          - not_null
+      
+      - name: medicaid_entity_id
+        description: Foreign key to the parent medicaid entity
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_medicaid_entities')
+              field: medicaid_entity_id
+
+      - name: contact_type
+        description: Identifies the role of the contact within the medicaid entity
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['AUTHORIZING_OFFICIAL', 'PRIMARY_CONTACT']
+
+      - name: full_name
+        description: Complete name as provided in source data
+        tests:
+          - not_null
+
+      - name: first_name
+        description: Extracted first name component from full_name
+        tests:
+          - not_null
+
+      - name: middle_name
+        description: Optional middle name component from full_name
+
+      - name: last_name
+        description: Extracted last name component from full_name
+        tests:
+          - not_null
+
+      - name: phone_number
+        description: Contact's primary phone number
+        tests:
+          - not_null
+
+      - name: phone_extension
+        description: Optional extension for the phone number
+
+      - name: title
+        description: Official title or position of the contact
+        tests:
+          - not_null
+
+      - name: loaded_at
+        description: Timestamp when this record was loaded into the staging table
+        tests:
+          - not_null
