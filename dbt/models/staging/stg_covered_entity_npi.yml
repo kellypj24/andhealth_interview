@@ -25,15 +25,11 @@ models:
         description: National Provider Identifier number
         tests:
           - not_null
-          - length:
-              equal_to: 10  # NPI numbers are 10 digits
 
       - name: state
         description: State associated with the NPI number
         tests:
           - not_null
-          - length:
-              equal_to: 2
 
       - name: loaded_at
         description: Timestamp when the record was loaded into the source

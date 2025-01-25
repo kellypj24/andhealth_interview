@@ -41,32 +41,27 @@ models:
       - name: auth_official_name
         description: Full name of the authorizing official responsible for this Medicaid relationship
         tests:
-          - not_null:
-              where: "is_participating = 'TRUE'"
+          - not_null
 
       - name: auth_official_phone
         description: Phone number of the authorizing official
         tests:
-          - not_null:
-              where: "is_participating = 'TRUE'"
+          - not_null
 
       - name: auth_official_title
         description: Job title of the authorizing official
         tests:
-          - not_null:
-              where: "is_participating = 'TRUE'"
+          - not_null
 
       - name: primary_contact_name
         description: Full name of the primary contact for this Medicaid relationship
         tests:
-          - not_null:
-              where: "is_participating = 'TRUE'"
+          - not_null
 
       - name: primary_contact_phone
         description: Phone number of the primary contact
         tests:
-          - not_null:
-              where: "is_participating = 'TRUE'"
+          - not_null
 
       - name: primary_contact_phone_ext
         description: Optional phone extension for the primary contact
@@ -74,8 +69,7 @@ models:
       - name: primary_contact_title
         description: Job title of the primary contact
         tests:
-          - not_null:
-              where: "is_participating = 'TRUE'"
+          - not_null
 
       - name: entity_type
         description: Type of covered entity (e.g., BL)
@@ -97,20 +91,17 @@ models:
       - name: participating_start_date
         description: Date when this Medicaid relationship became active
         tests:
-          - not_null:
-              where: "is_participating = 'TRUE'"
+          - not_null
 
       - name: termination_date
         description: Date when this Medicaid relationship was terminated, if applicable
         tests:
-          - not_null:
-              where: "is_participating = 'FALSE'"
+          - not_null
 
       - name: termination_reason
         description: Reason provided for termination, if the relationship was terminated
         tests:
-          - not_null:
-              where: "termination_date is not null"
+          - not_null
 
       - name: loaded_at
         description: Timestamp when the record was loaded into the source system

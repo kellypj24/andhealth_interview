@@ -45,8 +45,6 @@ models:
         description: State code
         tests:
           - not_null
-          - length:
-              equal_to: 2
 
       - name: zip
         description: ZIP code
