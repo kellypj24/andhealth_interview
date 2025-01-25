@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: int_340b_contract_pharmacies
+    description: Intermediate model summarizing contract pharmacy relationships by covered entity
+    
+    columns:
+      - name: ce_id
+        description: Unique identifier for the covered entity
+        tests:
+          - unique
+          - not_null
+
+      - name: id_340b
+        description: 340B program ID for the covered entity
+        tests:
+          - not_null
+
+      - name: total_pharmacies
+        description: Total number of contracted pharmacies for the entity
+
+      - name: recently_certified_pharmacies
+        description: Number of pharmacies certified in the last 90 days
+
+      - name: first_contract_date
+        description: Date of first pharmacy contract for this entity
+
+      - name: most_recent_contract_date
+        description: Date of most recent pharmacy contract
+
+      - name: unique_pharmacy_cities
+        description: Number of unique cities where entity has contracted pharmacies
+
+      - name: unique_pharmacy_states
+        description: Number of unique states where entity has contracted pharmacies
+
+      - name: pharmacy_states
+        description: Comma-separated list of states with contracted pharmacies
