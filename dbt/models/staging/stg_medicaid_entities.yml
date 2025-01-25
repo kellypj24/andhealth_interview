@@ -1,0 +1,107 @@
+version: 2
+
+models:
+  - name: stg_medicaid_entities
+    description: >
+      Staging model for medicaid entities, including both primary medicaid entities
+      and their nested child entities. This model captures the hierarchical
+      relationship between medicaid entities and their parent covered entities.
+    
+    columns:
+      - name: medicaid_entity_id
+        description: Surrogate key for the medicaid entity
+        tests:
+          - unique
+          - not_null
+
+      - name: parent_ce_id
+        description: Foreign key to the parent covered entity
+        tests:
+          - not_null
+
+      - name: parent_id_340b
+        description: The 340B ID of the parent covered entity
+        tests:
+          - not_null
+
+      - name: parent_medicaid_ce_id
+        description: Foreign key to the parent medicaid entity (only populated for nested entities)
+
+      - name: parent_medicaid_id_340b
+        description: The 340B ID of the parent medicaid entity (only populated for nested entities)
+
+      - name: ce_id
+        description: The unique identifier for this medicaid entity
+        tests:
+          - not_null
+
+      - name: id_340b
+        description: The 340B ID for this medicaid entity
+        tests:
+          - not_null
+
+      - name: entity_name
+        description: The name of the medicaid entity
+        tests:
+          - not_null
+
+      - name: sub_name
+        description: The sub-name or doing business as name of the medicaid entity
+
+      - name: entity_type
+        description: The type of entity (e.g., BL)
+        tests:
+          - not_null
+
+      - name: grant_number
+        description: The grant number associated with this medicaid entity
+        tests:
+          - not_null
+
+      - name: medicaid_number
+        description: The medicaid provider number (only populated for primary medicaid entities)
+
+      - name: state
+        description: The state associated with the medicaid number (only populated for primary medicaid entities)
+        tests:
+          - accepted_values:
+              values: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 
+                      'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 
+                      'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 
+                      'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 
+                      'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY', 
+                      'DC', 'PR', 'VI', 'GU', 'AS', 'MP']
+              where: "state is not null"
+
+      - name: is_participating
+        description: Flag indicating if the entity is currently participating
+        tests:
+          - not_null
+
+      - name: participating_start_date
+        description: Date when the entity started participating
+        tests:
+          - not_null
+
+      - name: termination_date
+        description: Date when the entity was terminated, if applicable
+
+      - name: termination_reason
+        description: Reason for termination, if applicable
+
+      - name: _loaded_at
+        description: Timestamp when the record was loaded into the raw table
+        tests:
+          - not_null
+
+      - name: dbt_loaded_at
+        description: Timestamp when this record was loaded into the staging table
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - parent_ce_id
+            - ce_id
+            - coalesce(medicaid_number, id_340b)
