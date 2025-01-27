@@ -44,5 +44,5 @@ models:
       +materialized: table
       +schema: marts
     reports:
-      +materialized: view
+      +materialized: table
       +schema: reports
