@@ -1,0 +1,151 @@
+version: 2
+
+models:
+  - name: dim_contacts
+    description: >
+      Dimension table tracking contact information and roles for individuals associated with 340B covered entities.
+      Implements slowly changing dimension (Type 2) tracking to maintain historical contact information.
+      Each record represents a unique contact version with its associated roles and entity relationships.
+
+    columns:
+      - name: contact_key
+        description: Surrogate key generated from standardized contact name and phone number
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - unique
+
+      - name: contact_name
+        description: Full name of the contact person
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: varchar
+
+      - name: contact_title
+        description: Professional title or position of the contact
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "is_current = true"
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: varchar
+
+      - name: phone_number
+        description: Primary contact phone number
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: '^[0-9\-\(\)\s\.]+$'
+
+      - name: phone_extension
+        description: Optional phone extension number
+        tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: varchar
+
+      - name: version_sequence
+        description: Incremental number tracking changes to contact information over time
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: integer
+
+      - name: roles
+        description: Comma-separated list of all roles held by the contact across entities (e.g., 'authorizing_official, primary_contact')
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+
+      - name: role_count
+        description: Number of distinct roles held by the contact
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: integer
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              strictly: false
+              row_condition: "is_current = true"
+              max_value: 2  # Can only be authorizing_official and/or primary_contact
+              strictly: false
+              row_condition: "is_current = true"
+
+      - name: entity_count
+        description: Number of distinct covered entities this contact is associated with
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: integer
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+
+      - name: entity_ids
+        description: Comma-separated list of covered entity IDs this contact is associated with
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+
+      - name: entity_340b_ids
+        description: Comma-separated list of 340B IDs for associated covered entities
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+
+      - name: is_authorizing_official
+        description: Boolean flag indicating if contact serves as an authorizing official for any entity
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: boolean
+
+      - name: is_primary_contact
+        description: Boolean flag indicating if contact serves as a primary contact for any entity
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: boolean
+
+      - name: valid_from
+        description: Timestamp when this version of the contact information became valid
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: timestamp
+
+      - name: valid_to
+        description: Timestamp when this version of the contact information was superseded
+        tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: timestamp
+
+      - name: is_current
+        description: Boolean flag indicating if this is the current version of the contact record
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: boolean
+
+      - name: _loaded_at
+        description: Timestamp when the source record was loaded
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: timestamp
+
+      - name: dbt_loaded_at
+        description: Timestamp when this record was created in the staging layer
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: timestamp
+
+      - name: model_loaded_at
+        description: Timestamp when this record was created in this dimension model
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: timestamp
+
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 1
+      - dbt_expectations.expect_compound_columns_to_be_unique:
+          column_list: ["contact_key", "valid_from"]
+      - dbt_utils.equal_rowcount:
+          compare_model: ref('stg_covered_entity_contacts')
