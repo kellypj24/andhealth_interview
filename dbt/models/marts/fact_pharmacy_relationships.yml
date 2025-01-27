@@ -1,0 +1,99 @@
+version: 2
+
+models:
+  - name: fact_pharmacy_relationships
+    description: >
+      Fact table capturing pharmacy relationship metrics for covered entities.
+      Each record represents a monthly snapshot of pharmacy network statistics
+      for a covered entity, including counts, geographic distribution, and
+      certification metrics. This table supports analysis of pharmacy network
+      scale and geographic reach.
+
+    columns:
+      - name: pharmacy_relationship_key
+        description: Surrogate key generated from ce_id and snapshot_date
+        tests:
+          - unique
+          - not_null
+
+      - name: entity_key
+        description: Foreign key to dim_covered_entities
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_covered_entities')
+              field: entity_key
+
+      - name: date_key
+        description: Monthly snapshot date (first day of month)
+        tests:
+          - not_null
+
+      # Core Metrics
+      - name: total_pharmacies
+        description: Total number of contract pharmacies associated with the entity
+        tests:
+          - not_null
+
+      - name: recently_certified_pharmacies
+        description: Count of pharmacies certified within the last 90 days
+        tests:
+          - not_null
+
+      # Geographic Distribution
+      - name: unique_pharmacy_cities
+        description: Number of distinct cities where entity has contract pharmacies
+        tests:
+          - not_null
+
+      - name: unique_pharmacy_states
+        description: Number of distinct states where entity has contract pharmacies
+        tests:
+          - not_null
+
+      - name: pharmacy_states
+        description: Comma-separated list of state codes where entity has pharmacies
+        tests:
+          - not_null:
+              where: "total_pharmacies > 0"
+
+      # Temporal Metrics
+      - name: first_contract_date
+        description: Date of entity's first contract pharmacy relationship
+        tests:
+          - not_null:
+              where: "total_pharmacies > 0"
+
+      - name: most_recent_contract_date
+        description: Date of entity's most recent contract pharmacy addition
+        tests:
+          - not_null:
+              where: "total_pharmacies > 0"
+
+      - name: active_pharmacy_count
+        description: Number of pharmacies with current valid certifications
+        tests:
+          - not_null
+
+      - name: active_pharmacy_percentage
+        description: Percentage of total pharmacies that are currently active
+        tests:
+          - not_null
+
+      # SCD Type 2 fields
+      - name: valid_from
+        description: Timestamp when this snapshot became valid
+        tests:
+          - not_null
+
+      - name: valid_to
+        description: Timestamp when this snapshot was superseded
+
+      - name: is_current
+        description: Flag indicating if this is the current snapshot
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.equal_rowcount:
+          compare_model: ref('stg_contract_pharmacies')

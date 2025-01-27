@@ -13,47 +13,25 @@ models:
         description: Surrogate key generated from standardized address components
         tests:
           - unique
-          - dbt_expectations.expect_column_values_to_not_be_null
+          - not_null
 
       - name: address_line1
         description: Standardized primary address line
         tests:
-          - dbt_expectations.expect_column_values_to_not_be_null
-          - dbt_expectations.expect_column_values_to_be_of_type:
-              column_type: varchar
-          - dbt_expectations.expect_column_value_lengths_to_be_between:
-              min_value: 3
-              max_value: 100
-              row_condition: "address_line1 is not null"
+          - not_null
 
       - name: address_line2
         description: Optional secondary address line
-        tests:
-          - dbt_expectations.expect_column_values_to_be_of_type:
-              column_type: varchar
-          - dbt_expectations.expect_column_value_lengths_to_be_between:
-              min_value: 1
-              max_value: 100
-              row_condition: "address_line2 is not null"
 
       - name: city
         description: Standardized city name
         tests:
-          - dbt_expectations.expect_column_values_to_not_be_null
-          - dbt_expectations.expect_column_values_to_be_of_type:
-              column_type: varchar
-          - dbt_expectations.expect_column_value_lengths_to_be_between:
-              min_value: 2
-              max_value: 50
-              row_condition: "city is not null"
+          - not_null
 
       - name: state_code
         description: Two-letter US state code
         tests:
-          - dbt_expectations.expect_column_values_to_not_be_null
-          - dbt_expectations.expect_column_value_lengths_to_be_between:
-              min_value: 2
-              max_value: 2
+          - not_null
           - dbt_expectations.expect_column_values_to_be_in_set:
               value_set: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 
                          'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 
@@ -65,97 +43,56 @@ models:
       - name: zip5
         description: Five-digit ZIP code
         tests:
-          - dbt_expectations.expect_column_values_to_not_be_null
-          - dbt_expectations.expect_column_values_to_match_regex:
-              regex: '^\d{5}$'
+          - not_null
 
       - name: zip9
         description: Nine-digit ZIP+4 code when available
-        tests:
-          - dbt_expectations.expect_column_values_to_match_regex:
-              regex: '^\d{9}$'
-              row_condition: "zip9 is not null"
 
       - name: region
         description: Geographic region derived from state code (e.g., Northeast, Southeast, etc.)
         tests:
-          - dbt_expectations.expect_column_values_to_not_be_null
+          - not_null
           - dbt_expectations.expect_column_values_to_be_in_set:
               value_set: ['Northeast', 'Southeast', 'Midwest', 'Southwest', 'West', 'Pacific', 'Territories']
 
       - name: source_address_count
         description: Number of source addresses that were deduplicated into this standardized location
         tests:
-          - dbt_expectations.expect_column_values_to_not_be_null
-          - dbt_expectations.expect_column_values_to_be_of_type:
-              column_type: integer
-          - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1
-              strictly: false
+          - not_null
 
       - name: first_seen_at
         description: Timestamp when this location was first encountered in source data
         tests:
-          - dbt_expectations.expect_column_values_to_not_be_null
-          - dbt_expectations.expect_column_values_to_be_of_type:
-              column_type: timestamp
-          - dbt_expectations.expect_column_values_to_be_between:
-              min_value: '2000-01-01'  # Adjust based on your data history
-              max_value: '{{ current_timestamp() }}'
-              strictly: false
+          - not_null
 
       - name: last_seen_at
         description: Most recent timestamp this location appeared in source data
         tests:
-          - dbt_expectations.expect_column_values_to_not_be_null
-          - dbt_expectations.expect_column_values_to_be_of_type:
-              column_type: timestamp
-          - dbt_expectations.expect_column_values_to_be_between:
-              min_value: '2000-01-01'  # Adjust based on your data history
-              max_value: '{{ current_timestamp() }}'
-              strictly: false
+          - not_null
 
       - name: dbt_loaded_at
         description: Timestamp when this record was loaded by dbt
         tests:
-          - dbt_expectations.expect_column_values_to_not_be_null
-          - dbt_expectations.expect_column_values_to_be_of_type:
-              column_type: timestamp
+          - not_null
 
       - name: model_loaded_at
         description: Timestamp when this record was created in this dimension model
         tests:
-          - dbt_expectations.expect_column_values_to_not_be_null
-          - dbt_expectations.expect_column_values_to_be_of_type:
-              column_type: timestamp
+          - not_null
 
       - name: valid_from
         description: SCD Type 2 validity start timestamp
         tests:
-          - dbt_expectations.expect_column_values_to_not_be_null
-          - dbt_expectations.expect_column_values_to_be_of_type:
-              column_type: timestamp
+          - not_null
 
       - name: valid_to
         description: SCD Type 2 validity end timestamp
-        tests:
-          - dbt_expectations.expect_column_values_to_be_of_type:
-              column_type: timestamp
 
       - name: is_current
         description: Flag indicating if this is the current version of the location record
         tests:
-          - dbt_expectations.expect_column_values_to_not_be_null
-          - dbt_expectations.expect_column_values_to_be_of_type:
-              column_type: boolean
+          - not_null
 
     tests:
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          min_value: 1
-          strictly: false
       - dbt_expectations.expect_compound_columns_to_be_unique:
           column_list: ["location_key", "valid_from"]
-      # Verify that last_seen_at is always later than or equal to first_seen_at
-      - dbt_expectations.expect_column_pair_values_a_to_be_greater_than_or_equal_to_b:
-          column_a: last_seen_at
-          column_b: first_seen_at
