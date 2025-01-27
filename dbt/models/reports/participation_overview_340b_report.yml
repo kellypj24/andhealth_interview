@@ -1,0 +1,84 @@
+version: 2
+
+models:
+  - name: participation_overview_340b_report
+    description: >
+      Strategic analysis report providing a comprehensive view of covered entity 
+      participation in the 340B program. This report focuses on identifying high-potential
+      entities based on their participation depth, geographic reach, and alignment
+      with organizational mission criteria.
+    
+    columns:
+      - name: id_340b
+        description: Official 340B program identifier for the covered entity
+        tests:
+          - not_null
+
+      - name: is_participating
+        description: Current participation status in the 340B program
+        tests:
+          - not_null
+
+      - name: primary_state
+        description: Primary state of operation for the covered entity
+        tests:
+          - not_null
+
+      - name: mission_alignment_category
+        description: >
+          Strategic categorization of entities based on participation depth and reach.
+          Categories include: 'High Potential', 'Moderate Potential', 'Limited Potential'
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              value_set: ['High Potential', 'Moderate Potential', 'Limited Potential']
+
+      - name: medicaid_id_count
+        description: Number of distinct Medicaid IDs associated with the entity
+        tests:
+          - not_null
+
+      - name: medicaid_state_count
+        description: Number of states where the entity has Medicaid participation
+        tests:
+          - not_null
+
+      - name: npi_count
+        description: Number of distinct NPIs associated with the entity
+        tests:
+          - not_null
+
+      - name: npi_state_count
+        description: Number of states where the entity has registered NPIs
+        tests:
+          - not_null
+
+      - name: days_in_program
+        description: Total number of days entity has participated in 340B program
+        tests:
+          - not_null
+
+      - name: first_participation_date
+        description: Date when entity first began participating in any program
+        tests:
+          - not_null
+
+      - name: latest_source_load
+        description: Most recent data refresh timestamp
+        tests:
+          - not_null
+
+      - name: total_entities_in_report
+        description: Total count of participating entities included in report
+        tests:
+          - not_null
+
+      - name: high_potential_entities
+        description: Count of entities categorized as High Potential
+        tests:
+          - not_null
+
+      - name: moderate_potential_entities
+        description: Count of entities categorized as Moderate Potential
+        tests:
+          - not_null

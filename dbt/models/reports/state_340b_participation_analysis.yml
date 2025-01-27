@@ -1,0 +1,90 @@
+version: 2
+
+models:
+  - name: state_340b_participation_analysis
+    description: >
+      Analysis model examining state-level 340B program participation patterns
+      across organizations. Provides insights into geographic distribution of
+      Medicaid relationships and pharmacy networks, with derived metrics for
+      understanding program reach and density at the organization level.
+    
+    columns:
+      - name: entity_name
+        description: Legal name of the participating organization
+        tests:
+          - not_null
+
+      - name: entity_type
+        description: Classification type of the organization
+        tests:
+          - not_null
+
+      - name: primary_state
+        description: Primary state of operation
+        tests:
+          - not_null
+
+      - name: location_count
+        description: Number of distinct locations operated by the organization
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "total_medicaid_ids > 0"
+
+      - name: id_340b_count
+        description: Number of distinct 340B IDs associated with the organization
+        tests:
+          - not_null
+
+      - name: id_340b_list
+        description: Array of all 340B IDs associated with the organization
+        tests:
+          - not_null
+
+      - name: total_medicaid_ids
+        description: Total number of Medicaid provider relationships
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "total_medicaid_ids > 0"
+
+      - name: medicaid_state_count
+        description: Number of states with active Medicaid relationships
+        tests:
+          - not_null
+
+      - name: medicaid_states
+        description: Array of states with Medicaid participation
+        tests:
+          - not_null
+
+      - name: total_pharmacies
+        description: Total number of contract pharmacies in network
+        tests:
+          - not_null
+
+      - name: pharmacy_state_count
+        description: Number of states with contract pharmacy presence
+        tests:
+          - not_null
+
+      - name: pharmacy_states
+        description: Array of states with contract pharmacies
+        tests:
+          - not_null
+
+      - name: pharmacies_per_location
+        description: Average number of contract pharmacies per organization location
+        tests:
+          - not_null
+
+      - name: medicaid_ids_per_location
+        description: Average number of Medicaid IDs per organization location
+        tests:
+          - not_null
+
+    tests:
+      - dbt_expectations.expect_column_values_to_not_be_null:
+          column_name: total_medicaid_ids
+      - dbt_expectations.expect_compound_columns_to_be_unique:
+          column_list: ["entity_name", "primary_state"]
