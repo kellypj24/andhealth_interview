@@ -72,6 +72,7 @@ provider_metrics as (
     select distinct  -- Ensure distinct metrics after joining
         e.ce_id,
         e.id_340b,
+        e.primary_state,  -- Explicitly include primary_state
         cast(date_trunc('month', current_date) as date) as snapshot_date,
         {{ dbt_utils.generate_surrogate_key(['e.ce_id']) }} as entity_key,
         -- Medicaid metrics
@@ -131,6 +132,7 @@ select distinct
     snapshot_date as date_key,
     ce_id,
     id_340b,
+    primary_state,  -- Ensure primary_state is in the final select
     medicaid_id_count,
     medicaid_state_count,
     medicaid_states,
