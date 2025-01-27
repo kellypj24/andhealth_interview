@@ -1,0 +1,217 @@
+version: 2
+
+models:
+  - name: dim_covered_entities
+    description: >
+      Core dimension table containing covered entity information including entity details,
+      key addresses, and primary contacts. Each record represents a unique covered entity
+      with its latest associated information. This is the primary reference table for
+      covered entity attributes across the 340B data warehouse.
+
+    columns:
+      - name: entity_key
+        description: Surrogate key generated from ce_id
+        tests:
+          - unique
+          - dbt_expectations.expect_column_values_to_not_be_null
+
+      - name: ce_id
+        description: Source system identifier for the covered entity
+        tests:
+          - unique
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: varchar
+
+      - name: id_340b
+        description: Official 340B program identifier assigned by HRSA
+        tests:
+          - unique
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: '^[A-Z0-9]+$'
+
+      - name: entity_name
+        description: Legal name of the covered entity
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: varchar
+
+      - name: entity_type
+        description: Type classification of the covered entity (e.g., hospital, health center)
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              value_set: ['BL', 'CAH', 'CHC', 'RWC', 'DSH']
+
+      - name: sub_name
+        description: Optional subsidiary or DBA (doing business as) name
+        tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: varchar
+
+      - name: is_participating
+        description: Flag indicating if the entity is currently participating in 340B program
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: boolean
+
+      - name: participating_start_date
+        description: Date when the entity began participating in the 340B program
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "is_participating = true"
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: timestamp
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: '1992-01-01'  # 340B program started in 1992
+              row_condition: "is_participating = true"
+              strictly: false
+
+      - name: grant_number
+        description: Associated grant number if applicable
+        tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: varchar
+
+      - name: primary_state
+        description: Primary state of operation for the entity
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: char
+          - dbt_expectations.expect_column_value_lengths_to_be_between:
+              min_value: 2
+              max_value: 2
+
+      - name: certified_date
+        description: Date of most recent certification or recertification
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "is_participating = true"
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: timestamp
+
+      - name: termination_date
+        description: Date when participation was terminated, if applicable
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "is_participating = false"
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: timestamp
+
+      - name: termination_reason
+        description: Reason for termination if entity is no longer participating
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "termination_date is not null"
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: varchar
+
+      # Billing Address Fields
+      - name: billing_address_line1
+        description: Primary billing address line
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: varchar
+
+      - name: billing_city
+        description: City of billing address
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: varchar
+
+      - name: billing_state
+        description: State code of billing address
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_value_lengths_to_be_between:
+              min_value: 2
+              max_value: 2
+
+      - name: billing_zip
+        description: ZIP code of billing address
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: '^\d{5}(-\d{4})?$'
+
+      # Contact Information
+      - name: authorizing_official_name
+        description: Name of the authorizing official
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "is_participating = true"
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: varchar
+
+      - name: authorizing_official_title
+        description: Title of the authorizing official
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "authorizing_official_name is not null"
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: varchar
+
+      - name: primary_contact_name
+        description: Name of the primary contact
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "is_participating = true"
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: varchar
+
+      - name: primary_contact_title
+        description: Title of the primary contact
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "primary_contact_name is not null"
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: varchar
+
+      # Metadata Fields
+      - name: loaded_at
+        description: Timestamp when the source record was loaded
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: timestamp
+
+      - name: source_edited_at
+        description: Timestamp of last edit in source system
+        tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: timestamp
+
+      - name: valid_from
+        description: SCD Type 2 validity start timestamp
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: timestamp
+
+      - name: valid_to
+        description: SCD Type 2 validity end timestamp
+        tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: timestamp
+
+      - name: is_current
+        description: Flag indicating if this is the current version of the entity record
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: boolean
+
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 1
+          strictly: false
+      - dbt_expectations.expect_compound_columns_to_be_unique:
+          column_list: ["entity_key", "valid_from"]
+      - dbt_utils.equal_rowcount:
+          compare_model: ref('stg_covered_entities')
