@@ -1,0 +1,174 @@
+version: 2
+
+models:
+  - name: fact_provider_participation
+    description: >
+      Fact table tracking provider participation metrics for covered entities.
+      Each record represents a point-in-time snapshot of provider relationships,
+      including Medicaid and NPI participation details, geographic coverage,
+      and participation status indicators. This table supports analysis of
+      provider network breadth and program participation patterns.
+
+    columns:
+      - name: entity_key
+        description: Foreign key to dim_covered_entities
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_covered_entities')
+              field: entity_key
+
+      - name: date_key
+        description: Monthly snapshot date for the metrics
+        tests:
+          - not_null
+
+      - name: ce_id
+        description: Source system identifier for the covered entity
+        tests:
+          - not_null
+
+      - name: id_340b
+        description: Official 340B program identifier
+        tests:
+          - not_null
+
+      - name: primary_state
+        description: Primary state of operation for the entity
+        tests:
+          - not_null
+
+      - name: medicaid_id_count
+        description: >
+          Medicaid Metrics - Number of Medicaid IDs associated with the entity
+        tests:
+          - not_null
+
+      - name: medicaid_state_count
+        description: >
+          Medicaid Metrics - Number of states where entity has Medicaid participation
+        tests:
+          - not_null
+
+      - name: medicaid_states
+        description: >
+          Medicaid Metrics - Comma-separated list of states with Medicaid participation
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "medicaid_state_count > 0"
+
+      - name: npi_count
+        description: >
+          NPI Metrics - Number of NPIs associated with the entity
+        tests:
+          - not_null
+
+      - name: npi_state_count
+        description: >
+          NPI Metrics - Number of states where entity has registered NPIs
+        tests:
+          - not_null
+
+      - name: npi_states
+        description: >
+          NPI Metrics - Comma-separated list of states with NPI registrations
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "npi_state_count > 0"
+
+      - name: has_both_medicaid_and_npi
+        description: >
+          Participation Indicators - Flag indicating if entity has both Medicaid and NPI registrations
+        tests:
+          - not_null
+
+      - name: primary_state_has_medicaid
+        description: >
+          Participation Indicators - Flag indicating if entity has Medicaid in their primary state
+        tests:
+          - not_null
+
+      - name: primary_state_has_npi
+        description: >
+          Participation Indicators - Flag indicating if entity has NPI in their primary state
+        tests:
+          - not_null
+
+      - name: first_participation_date
+        description: >
+          Temporal Fields - Earliest date of participation across all programs
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "is_participating = true"
+
+      - name: last_participation_date
+        description: >
+          Temporal Fields - Most recent participation date across all programs
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "is_participating = false"
+
+      - name: is_participating
+        description: >
+          Temporal Fields - Current participation status in 340B program
+        tests:
+          - not_null
+
+      - name: participating_start_date
+        description: >
+          Temporal Fields - Date when entity began participating in 340B program
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "is_participating = true"
+
+      - name: certified_date
+        description: >
+          Temporal Fields - Most recent certification date
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "is_participating = true"
+
+      - name: termination_date
+        description: >
+          Temporal Fields - Date of program termination if applicable
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              row_condition: "is_participating = false"
+
+      - name: latest_source_load
+        description: >
+          Metadata Fields - Most recent source data load timestamp
+        tests:
+          - not_null
+
+      - name: source_edited_at
+        description: >
+          Metadata Fields - Last edit timestamp from source system
+
+      - name: dbt_loaded_at
+        description: >
+          Metadata Fields - Timestamp when record was loaded by dbt
+        tests:
+          - not_null
+
+      - name: valid_from
+        description: >
+          SCD Type 2 Fields - Timestamp when this version became valid
+        tests:
+          - not_null
+
+      - name: valid_to
+        description: >
+          SCD Type 2 Fields - Timestamp when this version was superseded
+
+      - name: is_current
+        description: >
+          SCD Type 2 Fields - Flag indicating if this is the current version
+        tests:
+          - not_null
+
+    tests:
+      - dbt_expectations.expect_compound_columns_to_be_unique:
+          column_list: ["entity_key", "date_key"]
+      - dbt_utils.equal_rowcount:
+          compare_model: ref('stg_covered_entities')
