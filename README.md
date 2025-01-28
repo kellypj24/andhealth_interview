@@ -114,22 +114,6 @@ The pipeline enables several key business capabilities:
 5. Implement CI/CD pipeline for automated testing and deployment
 
 ## Getting Started
-```bash
-# Start the database and loader
-docker-compose up -d
-
-# Install dbt dependencies
-dbt deps
-
-# Run the transformations
-dbt run
-
-# Run tests
-dbt test
-
-# Generate documentation
-dbt docs generate
-```
 
 ## Project Structure
 ```
@@ -162,14 +146,12 @@ dbt docs generate
 └── pyproject.toml
 ```
 
-## Getting Started
-
 ### Prerequisites
 - Docker and Docker Compose installed
 - Python 3.11 or higher
 - Poetry (Python package manager)
 - dbt installed locally (optional, can be run through Docker)
-- The 340B OPAIS Covered Entity Daily Export JSON file
+- The 340B OPAIS Covered Entity Daily Export JSON file https://340bopais.hrsa.gov/reports
 
 ### Initial Setup
 
