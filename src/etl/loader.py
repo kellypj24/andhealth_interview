@@ -17,11 +17,13 @@ from sqlalchemy import (
     JSON,
     TIMESTAMP,
     text,
+    PrimaryKeyConstraint,
 )
 import os
 from typing import Iterator, Dict, Any
 from psycopg2.extras import execute_values
 import json
+from hashlib import sha256
 
 # Set up logging
 logging.basicConfig(
@@ -34,19 +36,30 @@ class RawDataLoader:
     def __init__(self, database_url: str):
         """Initialize the data loader."""
         self.engine = create_engine(database_url)
-        self.data_path = Path("/app/data/raw/OPA_CE_DAILY_PUBLIC.JSON")
+        self.data_path = Path("data/raw/OPA_CE_DAILY_PUBLIC.JSON")
 
-        # Define table metadata
+        # Define table metadata to match init.sql
         self.metadata = MetaData(schema="raw_340b")
         self.covered_entities = Table(
             "covered_entities",
             self.metadata,
-            Column("_loaded_at", TIMESTAMP(timezone=True)),
-            Column("ce_id", Integer),
+            Column(
+                "_loaded_at",
+                TIMESTAMP(timezone=True),
+                server_default=text("CURRENT_TIMESTAMP"),
+            ),
+            Column("ce_id", Integer, primary_key=True, unique=True),
             Column("id_340b", String),
             Column("data", JSON),
+            Column("data_hash", String(64)),
             extend_existing=True,
         )
+
+    def calculate_hash(self, data: dict) -> str:
+        """Calculate a hash of the JSON data in a consistent manner."""
+        # Sort keys to ensure consistent ordering
+        canonical_json = json.dumps(data, sort_keys=True)
+        return sha256(canonical_json.encode()).hexdigest()
 
     def stream_entities(self) -> Iterator[Dict[str, Any]]:
         """Stream entities from the JSON file."""
@@ -100,41 +113,55 @@ class RawDataLoader:
         records_processed = 0
 
         try:
-            # Get raw connection for using execute_values
             raw_conn = self.engine.raw_connection()
             with raw_conn.cursor() as cur:
                 batch = []
+                seen_ce_ids = set()  # Track ce_ids in current batch
+
                 insert_query = """
-                    INSERT INTO raw_340b.covered_entities (ce_id, id_340b, data, _loaded_at)
+                    INSERT INTO raw_340b.covered_entities 
+                        (ce_id, id_340b, data, data_hash)
                     VALUES %s
-                    ON CONFLICT (ce_id, _loaded_at) DO UPDATE 
+                    ON CONFLICT (ce_id) DO UPDATE 
                     SET id_340b = EXCLUDED.id_340b,
-                        data = EXCLUDED.data;
+                        data = EXCLUDED.data,
+                        data_hash = EXCLUDED.data_hash,
+                        _loaded_at = CURRENT_TIMESTAMP
+                    WHERE raw_340b.covered_entities.data_hash != EXCLUDED.data_hash;
                 """
 
                 for entity in self.stream_entities():
-                    # Convert entity to a tuple for execute_values
+                    ce_id = entity.get("ceId")
+
+                    # Skip if we've already seen this ce_id in current batch
+                    if ce_id in seen_ce_ids:
+                        continue
+
+                    seen_ce_ids.add(ce_id)
+                    data_hash = self.calculate_hash(entity)
                     batch.append(
                         (
-                            entity.get("ceId"),
+                            ce_id,
                             entity.get("id340B"),
                             json.dumps(entity),
-                            datetime.now(),
+                            data_hash,
                         )
                     )
 
                     if len(batch) >= batch_size:
                         execute_values(cur, insert_query, batch)
                         records_processed += len(batch)
+                        logging.info(f"Processed {records_processed} records")
                         batch = []
-                        raw_conn.commit()
-                        logger.info(f"Processed {records_processed} records")
+                        seen_ce_ids.clear()  # Clear the set for the next batch
 
                 # Insert any remaining records
                 if batch:
                     execute_values(cur, insert_query, batch)
                     records_processed += len(batch)
-                    raw_conn.commit()
+                    logging.info(f"Processed {records_processed} records")
+
+                raw_conn.commit()
 
                 self.finish_load(load_id, records_processed)
                 logger.info(f"Successfully loaded {records_processed} records")
