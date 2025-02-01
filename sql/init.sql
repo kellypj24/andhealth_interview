@@ -7,10 +7,11 @@ CREATE SCHEMA IF NOT EXISTS raw_340b;
 -- Raw covered entities table - stores JSON data with minimal transformation
 CREATE TABLE IF NOT EXISTS raw_340b.covered_entities (
     _loaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    ce_id INTEGER,  -- extracted for easier joining/tracking
-    id_340b TEXT,   -- extracted for easier joining/tracking
-    data JSONB NOT NULL,  -- store complete entity JSON
-    PRIMARY KEY (ce_id, _loaded_at)
+    ce_id INTEGER PRIMARY KEY,  -- Changed from composite key to single primary key
+    id_340b TEXT,   -- kept as TEXT instead of VARCHAR to match original
+    data JSONB NOT NULL,  -- kept JSONB and NOT NULL constraint
+    data_hash VARCHAR(64),
+    -- Removed old PRIMARY KEY (ce_id, _loaded_at) definition
 );
 
 -- Create indexes for efficient querying and CDC
