@@ -118,32 +118,43 @@ The pipeline enables several key business capabilities:
 ## Project Structure
 ```
 ├── data/
-│   └── raw/
-│       └── OPA_CE_DAILY_PUBLIC.JSON
+│   ├── raw/                          # Raw data files
+│   │   └── OPA_CE_DAILY_PUBLIC.JSON  # Daily OPAIS export
+│   └── processed/                    # Processed/intermediate data files
 ├── dbt/
-│   ├── analyses/
-│   ├── dbt_packages/
-│   ├── logs/
-│   ├── macros/
-│   │   ├── generate_schema_name.sql
-│   │   └── get_region.sql
-│   └── models/
-│       ├── example/
-│       ├── intermediate/
-│       ├── marts/
-│       └── reports/
-├── sql/
-│   └── init.sql
-├── src/
-│   └── etl/
-│       ├── __pycache__/
-│       └── loader.py
-├── docker-compose.yml
-├── Dockerfile
-├── explore_json.py
-├── json_size_checker.py
-├── poetry.lock
-└── pyproject.toml
+│   ├── analyses/                     # Ad-hoc analytical SQL queries
+│   ├── dbt_packages/                 # External dbt packages
+│   ├── logs/                         # dbt execution logs
+│   ├── macros/                       # Reusable SQL macros
+│   │   ├── generate_schema_name.sql  # Custom schema naming
+│   │   └── get_region.sql           # Region classification logic
+│   ├── models/                       # Data transformation models
+│   │   ├── example/                 # Example models
+│   │   ├── intermediate/            # Intermediate tables
+│   │   ├── marts/                   # Business-facing dimensional models
+│   │   │   ├── dim_location.sql
+│   │   │   ├── dim_provider.sql
+│   │   │   └── fact_provider_participation.sql
+│   │   └── reports/                 # Report-specific models
+│   ├── seeds/                       # Static CSV reference data
+│   └── tests/                       # Custom data tests
+├── sql/                             # Database setup scripts
+│   └── init.sql                     # Initial schema creation
+├── src/                             # Source code
+│   ├── etl/                         # ETL processing scripts
+│   │   ├── __pycache__/
+│   │   ├── loader.py               # JSON data loader
+│   │   └── transformer.py          # Data transformation utilities
+│   └── utils/                      # Shared utility functions
+├── tests/                          # Python test files
+│   └── test_loader.py
+├── docker-compose.yml              # Docker services config
+├── Dockerfile                      # Container build instructions
+├── explore_json.py                 # JSON exploration script
+├── json_size_checker.py           # File size validation
+├── poetry.lock                    # Locked dependencies
+├── pyproject.toml                 # Project configuration
+└── README.md                      # Project documentation
 ```
 
 ### Prerequisites
